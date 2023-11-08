@@ -9,17 +9,18 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 contract AIVoter is Ownable {
     ISpace public space;
     address public voter;
+    string public prompt = "Vote on the subsequent proposal. Please return the result in the format 'Y/N/A:reason' where Y is for FOR, N is for AGAINST and A is for ABSTAIN and reason is the reason you made this decision based on the proposal. The proposal: ";
 
     constructor(ISpace _space) {
         space = _space;
     }
 
-    function llmInference(string memory prompt) public pure returns (string memory) {
-        return "A: I am neutral on this proposal.";
+    function setPrompt(string memory _prompt) public onlyOwner {
+        prompt = _prompt;
     }
 
     function decide(string memory proposal) public pure returns (Choice, string memory) {
-        string memory result = llmInference(string.concat("Vote on the subsequent proposal. Please return the result in the format 'Y/N/A:reason' where Y is for FOR, N is for AGAINST and A is for ABSTAIN and reason is the reason you made this decision based on the proposal. The proposal: ", proposal));
+        string memory result = llmInference(string.concat(prompt, proposal));
 
         string memory v = substring(result, 0, 1);
         string memory reason = substring(result, 2, bytes(result).length);
@@ -40,7 +41,6 @@ contract AIVoter is Ownable {
         space.vote(address(this), proposalId, choice, userVotingStrategies, reason);
     }
 
-
     // Returns the substring from start index to end index (exclusive)
     function substring(string memory str, uint startIndex, uint endIndex) public pure returns (string memory) {
         bytes memory strBytes = bytes(str);
@@ -53,4 +53,9 @@ contract AIVoter is Ownable {
         }
         return string(result);
     }
+
+    function llmInference(string memory prompt) public pure returns (string memory) {
+        return "A: I am neutral on this proposal.";
+    }
+
 }
